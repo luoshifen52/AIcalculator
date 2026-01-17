@@ -1,3 +1,4 @@
+import re  # 【新增】用于正则替换
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
@@ -32,6 +33,50 @@ except Exception as e:
     print("请检查网络或确认 huggingface 访问权限。")
 
 
+# 【新增】LaTeX 清洗函数
+def clean_latex_to_plaintext(text: str) -> str:
+    """
+    将 LaTeX 数学公式转换为易读的纯文本格式，防止控制台乱码
+    """
+    if not text:
+        return ""
+
+    # 1. 移除块级和行内公式标记 \[ ... \] and \( ... \)
+    text = text.replace(r"\[", "\n").replace(r"\]", "\n")
+    text = text.replace(r"\(", "").replace(r"\)", "")
+
+    # 2. 替换常用数学符号
+    text = text.replace(r"\pi", "π")
+    text = text.replace(r"\cdot", "×")
+    text = text.replace(r"\times", "×")
+    text = text.replace(r"\approx", "≈")
+    text = text.replace(r"\le", "≤").replace(r"\ge", "≥")
+    text = text.replace(r"\infty", "∞")
+    text = text.replace(r"\cdots", "...")
+    text = text.replace(r"\boxed", "")  # 移除 boxed 标记
+
+    # 3. 处理分数 \frac{a}{b} -> (a/b)
+    # 简单的正则无法处理嵌套，但能处理大部分简单情况
+    text = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"(\1 / \2)", text)
+
+    # 4. 处理根号 \sqrt{x} -> sqrt(x)
+    text = re.sub(r"\\sqrt\{([^}]+)\}", r"√(\1)", text)
+    text = re.sub(r"\\sqrt\[([^\]]+)\]\{([^}]+)\}", r"(\2)^(1/\1)", text)  # nth root
+
+    # 5. 处理上标 x^{2} -> x^2 (去除花括号)
+    text = re.sub(r"\^\{([0-9a-zA-Z\.]+\)\})\}", r"^\1", text)  # 复杂上标保留括号
+    text = re.sub(r"\^\{([0-9]+)\}", r"^\1", text)  # 简单数字上标去括号
+
+    # 6. 清理多余的大括号和反斜杠
+    text = text.replace("{", "").replace("}", "")
+    text = text.replace("\\", "")  # 最后移除所有残留的反斜杠
+
+    # 7. 压缩多余空行
+    text = re.sub(r"\n\s*\n", "\n", text)
+
+    return text.strip()
+
+
 def explain_expression(expr: str, result: str, log_steps: list[str]) -> str:
     """
     使用 LLM 根据可信计算日志生成解释
@@ -49,6 +94,12 @@ def explain_expression(expr: str, result: str, log_steps: list[str]) -> str:
     prompt_content = f"""
     你是一个数学与算法专家。用户通过“可信计算器”计算了表达式 {expr}，得到了高精度结果。
     请根据【执行日志】解释计算过程。
+
+    【规则】
+    1. 必须使用中文。
+    2. 禁止使用 LaTeX 格式（如 \( \pi \)），直接写 "pi"。
+    3. 禁止进行长篇大论的推导。
+    4. 严格模仿下面的【示例】格式输出。
 
     【用户表达式】
     {expr}
@@ -84,7 +135,7 @@ def explain_expression(expr: str, result: str, log_steps: list[str]) -> str:
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
-            max_new_tokens=800,
+            max_new_tokens=2048,
             do_sample=True,
             temperature=0.2,  # 保持低温采样
             top_p=0.85,
@@ -95,4 +146,7 @@ def explain_expression(expr: str, result: str, log_steps: list[str]) -> str:
     generated_ids = outputs[0][input_len:]
     response = tokenizer.decode(generated_ids, skip_special_tokens=True)
 
-    return response.strip()
+    # 【修改】在此处应用清洗函数，确保最终输出无乱码
+    final_response = clean_latex_to_plaintext(response.strip())
+
+    return final_response
