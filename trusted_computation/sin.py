@@ -1,7 +1,7 @@
 from decimal import Decimal, getcontext
 from .factorial import factorial
 from .pi import get_pi
-from .log_util import add_log
+from .log_util import add_log, get_log_level
 
 def sin(x, epsilon):
     """
@@ -23,12 +23,12 @@ def sin(x, epsilon):
 
     if isinstance(x, (int, float, Decimal)):  # 判断是否为常数
         x = Decimal(x)  # 转为 Decimal 类型
-        add_log(f"【sin】sin({x}) 是常数，直接展开计算")
+        # add_log(f"【sin】sin({x}) 是常数，直接展开计算")
         return sin1(x, epsilon)
     else:
         # 如果 x 是表达式，通过 Main 函数计算近似值
         x_tilde = Decimal(Main(x, Decimal(epsilon / 2)))  # 计算满足误差要求的 x_tilde
-        add_log(f"【sin】sin({x}) 是表达式，粗略求得 x̃ ≈ {x_tilde}（ε′ = {Decimal(epsilon/2)}）")
+        # add_log(f"【sin】sin({x}) 是表达式，粗略求得 x̃ ≈ {x_tilde}（ε′ = {Decimal(epsilon/2)}）")
         return sin1(x_tilde, epsilon / 2)  # 用 Sin1 计算 sin(x_tilde)
 
 def sin1(x, epsilon):
@@ -49,23 +49,30 @@ def sin1(x, epsilon):
     epsilon_high = Decimal('1E-1000')
     # 将输入值转换为 Decimal 类型，以便进行高精度计算
     x = Decimal(x)
+    log_level = get_log_level()
 
     # **归一化 x 到 [-π, π]**
     # pi_value = Main('pi', Decimal(epsilon))  # 计算 π
     pi_value = get_pi(epsilon_high)
     two_pi = 2 * pi_value  # 2π
+
     with localcontext() as ctx:
         # ctx.prec += 20  # 增加上下文精度，避免精度不足
         x = x.remainder_near(two_pi)
         if x > pi_value:
             x -= two_pi  # 归一化到 [-π, π]
-        add_log(f"【sin1】将 x 归一化到 [-π, π] 区间: x = {x}")
+        # add_log(f"【sin1】将 x 归一化到 [-π, π] 区间: x = {x}")
+
+    # ========= 日志（摘要） =========
+    if log_level != "NONE":
+        add_log(f"【sin】对输入进行区间归一化至 [-π, π]", level="SUMMARY")
+        add_log(f"【sin】使用泰勒展开计算 sin(x)", level="SUMMARY")
 
     # 初始化变量
     n = 1  # 当前项数
     term = x  # 初始项是 x
     result = term  # 初始化结果为第一项
-    add_log(f"使用泰勒展开 sin({x})，初始项为 x = {x}")
+    # add_log(f"使用泰勒展开 sin({x})，初始项为 x = {x}")
 
     # 使用给定的公式计算每一项，直到满足误差条件
     while abs(x ** (2 * n + 1)/factorial(2 * n + 1)) >= epsilon / 2:
@@ -74,9 +81,16 @@ def sin1(x, epsilon):
         print(f"term, {term}")
         term = Decimal((-1) ** n * x ** (2 * n + 1) / factorial(2 * n + 1))  # 计算当前项：(-1)^n * x^(2n+1) / (2n+1)!
         result += term  # 累加当前项
-        add_log(f"第 {n} 项: {term}，累计结果: {result}")
+        # add_log(f"第 {n} 项: {term}，累计结果: {result}")
         n += 1
 
+# ========= 日志：只记录项数 =========
+    if log_level == "SUMMARY":
+        add_log(
+            f"【sin】展开 {n} 项，满足 |最后一项| < ε/2，结果已收敛",
+            level="SUMMARY"
+        )
+
     # 最终结果通过 main 函数调用得到
-    add_log(f"sin({x}) ≈ {result}，共展开 {n} 项")
+    # add_log(f"sin({x}) ≈ {result}，共展开 {n} 项")
     return Decimal(result)

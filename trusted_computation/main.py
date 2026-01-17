@@ -1,4 +1,4 @@
-from decimal import Decimal, getcontext, ROUND_HALF_EVEN, InvalidOperation
+from decimal import Decimal, getcontext
 from .input import parse_expression  # 导入 input.py 解析函数
 from .mul import mul
 from .div import div
@@ -8,7 +8,8 @@ from .ln import ln
 from .Exp import Exp
 from .Exp2 import Exp2
 from .pi import get_pi
-from .log_util import add_log
+from .log_util import add_log, set_log_level
+
 import math
 
 def format_sig_digits(val, sig_digits):
@@ -26,22 +27,43 @@ def format_sig_digits(val, sig_digits):
         return f"{val:.{sig_digits - 1}e}"
 
 # === 论文算法1：Main 主计算函数 ===
-def Main(a, ε):
+def Main(a, ε, mode="compute"):
+    # ε = standardize_epsilon(ε)  #  精度标准化处理
+    """
+     主可信计算函数
+
+     参数:
+     expr    : 解析后的表达式树
+     epsilon : 误差上界
+     mode    : "compute" | "explain"
+
+     compute : 高精度、无日志
+     explain : 低精度、摘要日志
+     """
+
+    # === 日志等级控制（关键） ===
+    if mode == "compute":
+        set_log_level("NONE")
+    elif mode == "explain":
+        set_log_level("SUMMARY")
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+    return _Main(a, ε)
+def _Main(a, ε):
     # ε = standardize_epsilon(ε)  #  精度标准化处理
 
     """ 递归计算数学表达式树 """
     if isinstance(a, (int, float, Decimal)):  # 允许 float 转换
-        print(f"操作数，精度: {a}，{ε}")
-        add_log(f"读取常数：{a}")
+        # print(f"操作数，精度: {a}，{ε}")
         return Decimal(str(a))
 
     # **增加对 pi 和 e 的识别**
     if isinstance(a, str):
         if a.lower() == 'pi':
-            add_log("读取常数 π")
+            add_log("读取常数 π", level="SUMMARY")
             return get_pi(Decimal('1E-1000'))
         elif a.lower() == 'e':
-            add_log("读取常数 e")
+            add_log("读取常数 e", level="SUMMARY")
             return Decimal(str(math.e))  # 直接使用 math.e 计算 e
 
         raise ValueError(f"计算时无法解析的表达式: {a}")
@@ -50,66 +72,66 @@ def Main(a, ε):
         op = a[0]
 
         if op == '+':  # 加法
-            add_log(f"执行加法：计算 {a[1]} + {a[2]}")  # 日志记录
-            print(f"操作符: +, 精度: {ε}")
+            add_log("执行加法运算", level="SUMMARY")
+            # print(f"操作符: +, 精度: {ε}")
             result = Decimal(Main(a[1], ε / 2) + Main(a[2], ε / 2))
             return Decimal(result)
 
         elif op == '-':  # 减法
-            print(f"操作符: -, 精度: {ε}")
+            # print(f"操作符: -, 精度: {ε}")
             if len(a) == 2:
-                add_log(f"执行取负：计算 -({a[1]})")  # 日志记录
+                add_log("执行取负运算", level="SUMMARY")
                 return -Main(a[1], ε)  # 计算 a1 的值并取其相反数
             else:
                 # 如果是减法 (a1 - a2)，处理两个操作数
-                add_log(f"执行减法：计算 {a[1]} - {a[2]}")  # 日志记录
+                add_log("执行减法运算", level="SUMMARY")
                 result = Decimal(Main(a[1], ε / 2) - Main(a[2], ε / 2))
                 return Decimal(result)
 
         elif op == '*':  # 乘法
-            print(f"操作符: *, 精度: {ε}")
-            add_log(f"执行乘法：计算 {a[1]} × {a[2]}")  # 日志记录
+            # print(f"操作符: *, 精度: {ε}")
+            add_log("执行乘法运算", level="SUMMARY")
             result = Decimal(mul(a[1], a[2], ε))  # 调用 mul 计算乘法
             return Decimal(result)
 
         elif op == '/':  # 除法
-            print(f"操作符: /, 精度: {ε}")
-            add_log(f"执行除法：计算 {a[1]} ÷ {a[2]}")  # 日志记录
+            # print(f"操作符: /, 精度: {ε}")
+            add_log("执行除法运算", level="SUMMARY")
             result = Decimal(div(a[1], a[2], ε))  # 调用 div 计算除法
             return Decimal(result)
 
         elif op == 'exp1':  # e^a
-            print(f"操作符: e^ a1, 精度: {ε} {a[1]}")
-            add_log(f"执行指数计算：e^{a[1]}")  # 日志记录
+            # print(f"操作符: e^ a1, 精度: {ε} {a[1]}")
+            add_log("执行指数运算 e^x", level="SUMMARY")
             # return Decimal(Exp(a[1], ε)).quantize(ε)
             result = Decimal(Exp(a[1], ε))
             return Decimal(result)
 
         elif op == 'exp':  # a^b
-            print(f"操作符: a1^a2 a1, a2, 精度: {ε} {a[1]} {a[2]}")
-            add_log(f"执行幂运算：{a[1]}^{a[2]}")  # 日志记录
+            # print(f"操作符: a1^a2 a1, a2, 精度: {ε} {a[1]} {a[2]}")
+            add_log("执行幂运算 x^y", level="SUMMARY")
             result = Decimal(Exp2(a[1], a[2], ε))
             return Decimal(result)
 
         elif op == 'ln':  # ln(a)
-            print(f"操作符: ln a1, 精度: {ε} {a[1]}")
+            # print(f"操作符: ln a1, 精度: {ε} {a[1]}")
             add_log(f"执行自然对数计算：ln({a[1]})")  # 日志记录
             result = Decimal(ln(Main(a[1], ε), ε))
             return Decimal(result)
 
         elif op == 'log':  # log(a, b)
-            add_log(f"执行常用对数计算：log_{a[1]}({a[2]})")  # 日志记录
+            add_log("执行对数换底公式", level="SUMMARY")
             result = Main(('/', ('ln', a[2]), ('ln', a[1])), ε)
             return Decimal(result)
 
         elif op == 'sin':
-            print(f"操作符: sin, 精度: {ε}")
-            add_log(f"执行正弦函数计算：sin({a[1]})")  # 日志记录
+            # print(f"操作符: sin, 精度: {ε}")
+            add_log("执行正弦函数 sin(x)", level="SUMMARY")
             result = Decimal(sin(a[1], ε))  # 调用 sin 计算sin函数
             return Decimal(result)
 
         elif op == 'cos':  # cos(a) = sin(π/2 - a)
-            add_log(f"执行余弦函数计算：cos({a[1]})")  # 日志记录
+            add_log("执行余弦函数 cos(x)", level="SUMMARY")
             result = Decimal(sin(('-', ('/', 'pi', 2), a[1]), ε))  # 调用 sin 计算cos函数
             return Decimal(result)
 
@@ -127,7 +149,7 @@ def Main(a, ε):
                 raise ValueError(f"tan({x_val}) 未定义：x ≈ π/2 + nπ")
 
             # 正常计算 tan(x) = sin(x) / cos(x)
-            add_log(f"执行正切函数：tan({a[1]}) = sin({a[1]}) / cos({a[1]})")  # 日志记录
+            add_log("执行正切函数 tan(x)", level="SUMMARY")
             sin_val = sin(x, ε)
             cos_val = sin(('-', ('/', 'pi', 2), x), ε)
             result = Decimal(div(sin_val, cos_val, ε))
@@ -146,7 +168,7 @@ def Main(a, ε):
                 raise ValueError(f"cot({x_val}) 未定义：x ≈ nπ")
 
             # cot(x) = cos(x) / sin(x) = sin(π/2 - x) / sin(x)
-            add_log(f"执行余切函数：cot({a[1]}) = cos({a[1]}) / sin({a[1]})")  # 日志记录
+            add_log("执行余切函数 cot(x)", level="SUMMARY")
             cos_val = sin(('-', ('/', 'pi', 2), x), ε)
             sin_val = sin(x, ε)
             result = Decimal(div(cos_val, sin_val, ε))
@@ -164,7 +186,7 @@ def Main(a, ε):
                 raise ValueError(f"sec({x_val}) 未定义：x ≈ π/2 + nπ")
 
             # 正常计算
-            add_log(f"执行正割函数：sec({a[1]}) = 1 / cos({a[1]})")  # 日志记录
+            add_log("执行正割函数 sec(x)", level="SUMMARY")
             cos_val = sin(('-', ('/', 'pi', 2), x), ε)
             result = Decimal(div(1, cos_val, ε))
             return Decimal(result)
@@ -179,7 +201,7 @@ def Main(a, ε):
             if abs(mod_val) < ε or abs(mod_val - pi_val) < ε:
                 raise ValueError(f"csc({x_val}) 未定义：x ≈ nπ")
 
-            add_log(f"执行余割函数：csc({a[1]}) = 1 / sin({a[1]})")  # 日志记录
+            add_log("执行余割函数 tan(x)", level="SUMMARY")
             sin_val = sin(x, ε)
             result = Decimal(div(1, sin_val, ε))
             return Decimal(result)
@@ -189,7 +211,7 @@ def Main(a, ε):
             if val < -1 or val > 1:
                 raise ValueError(f"arcsin 输入值超出定义域：{val}")
 
-            add_log(f"执行反正弦函数：arcsin({a[1]})")  # 日志记录
+            add_log("执行反正弦函数 arcsin(x)", level="SUMMARY")
             result = Decimal(Main(('*', 2, ('arctan', ('/', a[1], ('+', 1, ('exp', ('-', 1, ('exp', a[1], 2)), ('/', 1, 2)))))), ε))
             return Decimal(result)
 
@@ -198,27 +220,27 @@ def Main(a, ε):
             if val < -1 or val > 1:
                 raise ValueError(f"arccos 输入值超出定义域：{val}")
 
-            add_log(f"执行反余弦函数：arccos({a[1]}) = π/2 - arcsin({a[1]})")  # 日志记录
+            add_log("执行反余弦函数 arccos(x)", level="SUMMARY")
             result = Decimal(Main(('-', ('/', 'pi', 2), ('arcsin', a[1])), ε))
             return Decimal(result)
 
         elif op == 'arctan':  # arctan(a)
-            add_log(f"执行反正切函数：arctan({a[1]})")  # 日志记录
+            add_log("执行反正切函数 arctan(x)", level="SUMMARY")
             result = Decimal(arctan(a[1], ε))
             return Decimal(result)
 
         elif op == 'arccot':  # arccot(a) = π/2 - arctan(a)
-            add_log(f"执行反余切函数：arccot({a[1]}) = π/2 - arctan({a[1]})")  # 日志记录
+            add_log("执行反余切函数 arcot(x)", level="SUMMARY")
             result = Decimal(Main(('-', ('/', 'pi', 2), ('arctan', a[1])), ε))
             return Decimal(result)
 
         elif op == 'sinh':  # sinh(a) = (e^a - e^(-a)) / 2
-            add_log(f"执行双曲正弦函数：sinh({a[1]}) = (e^{a[1]} - e^{-a[1]}) / 2")  # 日志记录
+            add_log("执行双曲正弦 sinh(x)", level="SUMMARY")
             result = Decimal(Main(('/', ('-', ('exp1', a[1]), ('exp1', ('-', a[1]))), 2), ε))
             return Decimal(result)
 
         elif op == 'cosh':  # cosh(a) = (e^a + e^(-a)) / 2
-            add_log(f"执行双曲余弦函数：cosh({a[1]}) = (e^{a[1]} + e^{-a[1]}) / 2")  # 日志记录
+            add_log("执行双曲余弦 cosh(x)", level="SUMMARY")
             result = Decimal(Main(('/', ('+', ('exp1', a[1]), ('exp1', ('-', a[1]))), 2), ε))
             return Decimal(result)
 

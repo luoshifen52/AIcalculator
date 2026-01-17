@@ -1,23 +1,30 @@
 log_steps = []
 
 # 日志等级：
-# NONE     : 完全不记录（高精度计算）
-# SUMMARY  : 只记录关键步骤（解释用）
-# DETAIL   : 详细调试（开发用）
-LOG_LEVEL = "SUMMARY"
+# NONE     - 不记录任何日志（用于高精度计算）
+# SUMMARY  - 仅记录关键步骤（用于解释）
+# DETAIL   - 记录详细步骤（调试用）
+LOG_LEVEL = "DETAIL"
 
 
 def set_log_level(level: str):
     """
-    设置日志等级：NONE / SUMMARY / DETAIL
+    设置日志等级: NONE / SUMMARY / DETAIL
     """
     global LOG_LEVEL
+    if level not in ("NONE", "SUMMARY", "DETAIL"):
+        raise ValueError("Invalid log level")
     LOG_LEVEL = level
 
+def get_log_level():
+    """
+    获取当前日志等级
+    """
+    return LOG_LEVEL
 
 def add_log(message: str, level: str = "DETAIL"):
     """
-    添加日志，根据日志等级决定是否记录
+    添加一步计算日志
     """
     if LOG_LEVEL == "NONE":
         return
@@ -35,6 +42,6 @@ def clear_log():
 
 def get_log():
     """
-    获取日志（用于 LLM 解释）
+    获取所有日志（最终用于 LLM）
     """
     return log_steps[:]
