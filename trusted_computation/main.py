@@ -8,7 +8,7 @@ from .ln import ln
 from .Exp import Exp
 from .Exp2 import Exp2
 from .pi import get_pi
-from .log_util import add_log, set_log_level
+from .log_util import add_log, set_log_level, get_log_level
 
 import math
 
@@ -37,18 +37,30 @@ def Main(a, ε, mode="compute"):
      epsilon : 误差上界
      mode    : "compute" | "explain"
 
-     compute : 高精度、无日志
-     explain : 低精度、摘要日志
+    mode:
+     - "compute": 高精度计算，关闭日志 (NONE)
+     - "explain": 解释模式，记录摘要日志 (SUMMARY)
      """
+    # 1. 保存当前的日志等级
+    previous_level = get_log_level()
 
-    # === 日志等级控制（关键） ===
-    if mode == "compute":
-        set_log_level("NONE")
-    elif mode == "explain":
-        set_log_level("SUMMARY")
-    else:
-        raise ValueError(f"Unknown mode: {mode}")
-    return _Main(a, ε)
+    try:
+        # 2. 根据模式设置新的日志等级
+        if mode == "compute":
+            set_log_level("NONE")
+        elif mode == "explain":
+            set_log_level("SUMMARY")
+        else:
+            # 如果没有指定 mode（或为 None），保持当前等级不变（用于递归调用）
+            pass
+
+        return _Main(a, ε)
+
+    finally:
+        # 3. 函数执行完毕后，务必恢复之前的日志等级
+        # 这样内部的 compute 调用不会永久关闭外部的 explain 日志
+        set_log_level(previous_level)
+
 def _Main(a, ε):
     # ε = standardize_epsilon(ε)  #  精度标准化处理
 
@@ -102,14 +114,14 @@ def _Main(a, ε):
 
         elif op == 'exp1':  # e^a
             # print(f"操作符: e^ a1, 精度: {ε} {a[1]}")
-            add_log("执行指数运算 e^x", level="SUMMARY")
+            # add_log("执行指数运算 e^x", level="SUMMARY")
             # return Decimal(Exp(a[1], ε)).quantize(ε)
             result = Decimal(Exp(a[1], ε))
             return Decimal(result)
 
         elif op == 'exp':  # a^b
             # print(f"操作符: a1^a2 a1, a2, 精度: {ε} {a[1]} {a[2]}")
-            add_log("执行幂运算 x^y", level="SUMMARY")
+            # add_log("执行幂运算 x^y", level="SUMMARY")
             result = Decimal(Exp2(a[1], a[2], ε))
             return Decimal(result)
 
@@ -126,7 +138,7 @@ def _Main(a, ε):
 
         elif op == 'sin':
             # print(f"操作符: sin, 精度: {ε}")
-            add_log("执行正弦函数 sin(x)", level="SUMMARY")
+            # add_log("执行正弦函数 sin(x)", level="SUMMARY")
             result = Decimal(sin(a[1], ε))  # 调用 sin 计算sin函数
             return Decimal(result)
 
@@ -225,7 +237,7 @@ def _Main(a, ε):
             return Decimal(result)
 
         elif op == 'arctan':  # arctan(a)
-            add_log("执行反正切函数 arctan(x)", level="SUMMARY")
+            # add_log("执行反正切函数 arctan(x)", level="SUMMARY")
             result = Decimal(arctan(a[1], ε))
             return Decimal(result)
 
@@ -279,3 +291,4 @@ if __name__ == "__main__":
 
         except ValueError as e:
             print(f"错误: {e}")
+        pass

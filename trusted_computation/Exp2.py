@@ -1,6 +1,6 @@
 from fractions import Fraction
 from decimal import Decimal
-from .log_util import add_log
+from .log_util import add_log, get_log_level
 
 def get_fraction(a2):
     """
@@ -35,31 +35,32 @@ def Exp2(a1, a2, epsilon):
     近似值 y ≈ a1^a2，满足 |y - a1^a2| < epsilon
     """
 
-    add_log(f"【Exp2】计算 {a1}^{a2}，误差限 ε = {epsilon}")
+    add_log(f"【Exp2】计算 {a1}^{a2}", level="SUMMARY")
 
     a1_val = Decimal(Main(a1, epsilon))  # 正确获取 a1 的值
     a2_val = Decimal(Main(a2, epsilon))  # 同理处理 a2
-    add_log(f"获取表达式值：a1 ≈ {a1_val}, a2 ≈ {a2_val}")
+
+    add_log(f"底数 ≈ {a1_val}, 指数 ≈ {a2_val}", level="DETAIL")
 
     # 特殊情况：如果 a1 = 0，直接返回 0
     if a1_val == 0:
-        add_log(f"特例：a1 = 0 ⇒ 结果为 0")
+        add_log(f"特例：底数为 0 ⇒ 结果为 0", level="SUMMARY")
         return Decimal(0)
 
     # 如果 a1 > 0，直接计算 exp(a2 * ln(a1))
     if a1_val > 0:
-        add_log(f"a1 > 0，使用 exp(a2 × ln(a1))")
+        add_log(f"底数 > 0，转化为 exp(a2 × ln(a1)) 计算", level="SUMMARY")
         return Main(('exp1', ('*', a2, ('ln', a1))), epsilon)
 
     # 如果 a1 < 0，根据 n 和 m 的奇偶性分别处理
     if a1_val < 0:
         # 计算 a2 的简分数表示 n/m
         n, m = get_fraction(a2)
-        add_log(f"a1 < 0，a2 = {n}/{m}（化为最简分数）")
+        add_log(f"底数 < 0，指数化为分数 {n}/{m}", level="SUMMARY")
 
         if n % 2 == 0:  # 如果 n 是偶数
-            add_log(f"n 为偶数 ⇒ 结果为实数 exp(a2 × ln(-a1))")
+            add_log(f"分子为偶数 ⇒ 结果为实数：exp(a2 × ln(-a1))", level="SUMMARY")
             return Main(('exp1', ('*', a2, ('ln', ('-', a1)))), epsilon)
         else:  # 如果 n 是奇数
-            add_log(f"n 为奇数 ⇒ 结果为负数 -exp(a2 × ln(-a1))")
+            add_log(f"分子为奇数 ⇒ 结果为负数：-exp(a2 × ln(-a1))", level="SUMMARY")
             return -Main(('exp1', ('*', a2, ('ln', ('-', a1)))), epsilon)

@@ -1,7 +1,7 @@
 from decimal import Decimal, ROUND_HALF_EVEN, InvalidOperation, ROUND_CEILING
 from .factorial import factorial
 from .cons import cons
-from .log_util import add_log, get_log_level
+from .log_util import add_log, get_log_level, format_val
 
 def Exp(a, epsilon):
     from .main import Main
@@ -62,7 +62,12 @@ def Exp1(c, epsilon):
 
     # ========= 日志摘要 =========
     if log_level != "NONE":
-        add_log(f"【exp】使用泰勒展开计算 e^{c}", level="SUMMARY")
+        # 【修改这里】截断 c 的显示长度，避免打印几百位小数
+        c_str = str(c)
+        if len(c_str) > 20:
+            c_str = c_str[:20] + "..."
+
+        add_log(f"【exp】使用泰勒展开计算 e^{c_str}", level="SUMMARY")
 
     # 初始化 n 为 max(|c|向上取整, 1)
     n = max(int(abs(c).to_integral_exact(rounding=ROUND_CEILING)), 1)
@@ -73,7 +78,7 @@ def Exp1(c, epsilon):
 
     # 计算满足误差条件的n
     while 2 * c ** n >= factorial(n - 1) * (n - c) * epsilon:
-        print(f"left right: {2 * c ** n} {factorial(n - 1) * (n - c) * epsilon}")
+        # print(f"left right: {2 * c ** n} {factorial(n - 1) * (n - c) * epsilon}")
         # add_log(f"误差校验不通过：n = {n}，扩大 n")
         n += 1
     while i <= n:

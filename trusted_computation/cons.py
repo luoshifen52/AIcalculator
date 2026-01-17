@@ -27,5 +27,5 @@ def cons(value):
     else:
         chosen = Decimal(10) ** (-(power + 1))
 
-    add_log(f"【cons】cons({value}) = {chosen}，选取的不大于该值的最大 10 的负整数次幂")
+    # add_log(f"【cons】cons({value}) = {chosen}，选取的不大于该值的最大 10 的负整数次幂")
     return chosen

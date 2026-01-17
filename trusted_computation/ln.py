@@ -75,7 +75,7 @@ def ln1(c, epsilon):
     n = 1
     term = (2 * (c - 1)) / (c + 1)  # 第一项是 (2 * (c - 1)) / (c + 1)
     result = term  # 初始化结果为第一项
-    add_log(f"【ln1】ln({c}) 使用泰勒展开，初始项: {term}")
+    # add_log(f"【ln1】ln({c}) 使用泰勒展开，初始项: {term}")
 
     # 循环计算每一项，直到满足误差条件
     while 2 * abs(c - 1) ** (2 * n + 1) >= 4 * n * c * (c + 1) ** (2 * n - 1) * epsilon:  # 判断当前项是否满足精度要求

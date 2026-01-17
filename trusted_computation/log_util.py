@@ -22,6 +22,14 @@ def get_log_level():
     """
     return LOG_LEVEL
 
+# === 新增：数值格式化函数 ===
+def format_val(val):
+    """截断过长的数值字符串，用于日志显示"""
+    s = str(val)
+    if len(s) > 20:
+        return s[:15] + "..." + s[-3:]
+    return s
+
 def add_log(message: str, level: str = "DETAIL"):
     """
     添加一步计算日志

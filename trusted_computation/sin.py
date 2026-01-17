@@ -78,7 +78,7 @@ def sin1(x, epsilon):
     while abs(x ** (2 * n + 1)/factorial(2 * n + 1)) >= epsilon / 2:
         # n += 1
         # term *= -x ** 2 / ((2 * n) * (2 * n + 1))  # 每一项通过前一项递推
-        print(f"term, {term}")
+        # print(f"term, {term}")
         term = Decimal((-1) ** n * x ** (2 * n + 1) / factorial(2 * n + 1))  # 计算当前项：(-1)^n * x^(2n+1) / (2n+1)!
         result += term  # 累加当前项
         # add_log(f"第 {n} 项: {term}，累计结果: {result}")

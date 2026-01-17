@@ -20,30 +20,31 @@ def mul(a1, a2, epsilon):
 
     from .main import Main  # **在函数内部导入 Main，避免循环导入**
 
-    add_log(f"【乘法 Mul】开始计算 {a1} × {a2}，误差限 ε = {epsilon}")
+    add_log(f"【Mul】计算 {a1} × {a2}", level="SUMMARY")
+    add_log(f"【Mul Detail】目标误差限 ε = {epsilon}", level="DETAIL")
 
     # Step 1: 获取 a2 的粗略值，误差限为 0.1
     a2_tilde = Decimal(Main(a2, Decimal('0.1')))  # 使用 Decimal 类型
-    add_log(f"Step 1: 粗略计算 a2 ≈ {a2_tilde}（误差限 0.1）")
+    add_log(f"Step 1: 粗略计算 a2 ≈ {a2_tilde}", level="DETAIL")
 
     # Step 2: 计算 a1 的误差限 epsilon1，选择不大于公式右侧的一个正数
     epsilon1 = cons(Decimal(epsilon) / (2 * (abs(a2_tilde) + Decimal('0.1'))))
-    add_log(f"Step 2: 分配给 a1 的误差限 epsilon1 = {epsilon1}")
+    add_log(f"Step 2: 分配给 a1 的误差限 ε1 = {epsilon1}", level="DETAIL")
 
     # Step 3: 获取 a1 的近似值，误差限为 epsilon1
     a1_tilde = Decimal(Main(a1, Decimal(epsilon1)))  # 将 epsilon1 转为 float 传递给 main
-    add_log(f"Step 3: 更精确计算 a1 ≈ {a1_tilde}（误差限 {epsilon1}）")
+    add_log(f"Step 3: 精确计算 a1 ≈ {a1_tilde}", level="DETAIL")
 
     # Step 4: 计算 a2 的误差限 epsilon2，选择不大于公式右侧的一个正数
     epsilon2 = cons(Decimal(epsilon) / (2 * abs(a1_tilde)))
-    add_log(f"Step 4: 分配给 a2 的误差限 epsilon2 = {epsilon2}")
+    add_log(f"Step 4: 分配给 a2 的误差限 ε2 = {epsilon2}", level="DETAIL")
 
     # Step 5: 获取 a2 的更精确值，误差限为 epsilon2
     a2_tilde = Decimal(Main(a2, Decimal(epsilon2)))  # 将 epsilon2 转为 float 传递给 main
-    add_log(f"Step 5: 更精确计算 a2 ≈ {a2_tilde}（误差限 {epsilon2}）")
+    add_log(f"Step 5: 精确计算 a2 ≈ {a2_tilde}", level="DETAIL")
 
     # Step 6: 返回最终结果
-    print(f"mul: {a1_tilde * a2_tilde}")
+    # print(f"mul: {a1_tilde * a2_tilde}")
     result = a1_tilde * a2_tilde
-    add_log(f"Step 6: 最终结果 = {a1_tilde} × {a2_tilde} = {result}")
+    add_log(f"Step 6: 最终结果 = {result}", level="DETAIL")
     return result
