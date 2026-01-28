@@ -67,7 +67,11 @@ def ln1(c, epsilon):
 # ========== 日志（摘要级） ==========
     log_level = get_log_level()
     if log_level != "NONE":
-        add_log(f"【ln】使用对称泰勒展开计算 ln({c})", level="SUMMARY")
+        # 【修改】截断过长的 c
+        c_str = str(c)
+        if len(c_str) > 20:
+            c_str = c_str[:20] + "..."
+        add_log(f"【ln】使用对称泰勒展开计算 ln({c_str})", level="SUMMARY")
 
 # ========== 算法实现 ==========
 

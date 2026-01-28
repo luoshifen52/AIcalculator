@@ -20,7 +20,14 @@ def mul(a1, a2, epsilon):
 
     from .main import Main  # **在函数内部导入 Main，避免循环导入**
 
-    add_log(f"【Mul】计算 {a1} × {a2}", level="SUMMARY")
+    # 【修改】截断操作数
+    a1_str = str(a1)
+    if len(a1_str) > 20: a1_str = a1_str[:20] + "..."
+
+    a2_str = str(a2)
+    if len(a2_str) > 20: a2_str = a2_str[:20] + "..."
+
+    add_log(f"【Mul】执行乘法 {a1_str} × {a2_str}", level="SUMMARY")
     add_log(f"【Mul Detail】目标误差限 ε = {epsilon}", level="DETAIL")
 
     # Step 1: 获取 a2 的粗略值，误差限为 0.1

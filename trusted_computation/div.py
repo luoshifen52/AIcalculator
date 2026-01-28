@@ -16,7 +16,14 @@ def div(a1, a2, epsilon):
     """
     from .main import Main  # **在函数内部导入 Main，避免循环导入**
 
-    add_log(f"【div】执行除法 {a1}/{a2}", level="SUMMARY")
+    # 【修改】截断操作数
+    a1_str = str(a1)
+    if len(a1_str) > 20: a1_str = a1_str[:20] + "..."
+
+    a2_str = str(a2)
+    if len(a2_str) > 20: a2_str = a2_str[:20] + "..."
+
+    add_log(f"【Div】执行除法 {a1_str} ÷ {a2_str}", level="SUMMARY")
 
     # Step 1: 初步估算分子 a1
     a1_tilde = Decimal(Main(a1, Decimal('0.1')))  # 将结果转换为 Decimal 类型

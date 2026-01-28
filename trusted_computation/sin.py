@@ -65,8 +65,13 @@ def sin1(x, epsilon):
 
     # ========= 日志（摘要） =========
     if log_level != "NONE":
+        # 【修改】打印截断后的 x，方便调试和解释
+        x_str = str(x)
+        if len(x_str) > 20:
+            x_str = x_str[:20] + "..."
+
         add_log(f"【sin】对输入进行区间归一化至 [-π, π]", level="SUMMARY")
-        add_log(f"【sin】使用泰勒展开计算 sin(x)", level="SUMMARY")
+        add_log(f"【sin】使用泰勒展开计算 sin({x_str})", level="SUMMARY")
 
     # 初始化变量
     n = 1  # 当前项数

@@ -63,7 +63,12 @@ def arctan1(c, epsilon):
 
     # 泰勒展开路径
     if log_level != "NONE":
-        add_log(f"【arctan】使用泰勒展开计算 arctan({c})", level="SUMMARY")
+        # 【修改】截断过长的 c
+        c_str = str(c)
+        if len(c_str) > 20:
+            c_str = c_str[:20] + "..."
+
+        add_log(f"【arctan】使用泰勒展开计算 arctan({c_str})", level="SUMMARY")
 
     # 如果 c 在区间 [-1, 1] 内，使用泰勒级数展开计算反正切
     n = 1

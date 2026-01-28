@@ -35,12 +35,19 @@ def Exp2(a1, a2, epsilon):
     近似值 y ≈ a1^a2，满足 |y - a1^a2| < epsilon
     """
 
-    add_log(f"【Exp2】计算 {a1}^{a2}", level="SUMMARY")
+    # 【修改】同时截断底数和指数
+    a1_str = str(a1)
+    if len(a1_str) > 20: a1_str = a1_str[:20] + "..."
+
+    a2_str = str(a2)
+    if len(a2_str) > 20: a2_str = a2_str[:20] + "..."
+
+    add_log(f"【Exp2】计算 {a1_str}^{a2_str}", level="SUMMARY")
 
     a1_val = Decimal(Main(a1, epsilon))  # 正确获取 a1 的值
     a2_val = Decimal(Main(a2, epsilon))  # 同理处理 a2
 
-    add_log(f"底数 ≈ {a1_val}, 指数 ≈ {a2_val}", level="DETAIL")
+    add_log(f"底数 ≈ {a1_str}, 指数 ≈ {a2_str}", level="DETAIL")
 
     # 特殊情况：如果 a1 = 0，直接返回 0
     if a1_val == 0:

@@ -135,7 +135,7 @@ def explain_expression(expr: str, result: str, log_steps: list[str]) -> str:
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
-            max_new_tokens=2048,
+            max_new_tokens=3072,
             do_sample=True,
             temperature=0.2,  # 保持低温采样
             top_p=0.85,
